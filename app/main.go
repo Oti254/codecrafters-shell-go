@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 )
@@ -14,7 +13,8 @@ func main() {
 	// Reads the user input, stores it in a string
 	command, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
-		errors.New("Unable to read user input")
+		fmt.Fprintln(os.Stderr, "Error reading input", err)
+		os.Exit(1)
 	}
 
 	// Printing error message
