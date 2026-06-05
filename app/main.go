@@ -24,6 +24,12 @@ func main() {
 		command = strings.TrimSpace(command)
 		words := strings.Fields(command)
 
+		// List of all builtin types
+		builtIn := map[string]bool{
+			"echo": true,
+			"exit": true,
+			"type": true,
+		}
 		if command == "exit" {
 			break
 		}
@@ -31,6 +37,16 @@ func main() {
 		// Implementing echo my way
 		if len(words) > 0 && words[0] == "echo" {
 			fmt.Println(strings.Join(words[1:], " "))
+			continue
+		}
+
+		// Type checking of commands
+		if len(words) > 0 && words[0] == "type" {
+			if _, exists := builtIn[words[1]]; exists {
+				fmt.Println(words[1] + " is a shell builtin")
+				continue
+			}
+			fmt.Println(words[1] + ": not found")
 			continue
 		}
 		// Printing error message
