@@ -22,30 +22,18 @@ func main() {
 			os.Exit(1)
 		}
 		command = strings.TrimSpace(command)
-		//words := strings.Fields(command)
+		words := strings.Fields(command)
 
 		if command == "exit" {
 			break
-			// Implementing echo
-		} else if strings.HasPrefix(command, "echo") {
-			fmt.Println(command[5:])
-		} else {
-			/**
-			// Implementing echo my way
-			if words[0] == "echo" {
-				fmt.Print(words[1])
-				for i, word := range words {
-					if i == 0 || i == 1 {
-						continue
-					}
-					fmt.Print(" " + word)
-				}
-				fmt.Println()
-				continue
-			}
-			**/
-			// Printing error message
-			fmt.Println(command + ": command not found")
 		}
+
+		// Implementing echo my way
+		if len(words) > 0 && words[0] == "echo" {
+			fmt.Println(strings.Join(words[1:], " "))
+			continue
+		}
+		// Printing error message
+		fmt.Println(command + ": command not found")
 	}
 }
