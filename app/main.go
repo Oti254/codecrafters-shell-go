@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -29,7 +30,11 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Error reading input", err)
 			os.Exit(1)
 		}
+
+		// Removes the newline at the end
 		command = strings.TrimSpace(command)
+
+		// Eliminates the spaces and places individual words in a list
 		words := strings.Fields(command)
 
 		if len(words) == 0 {
@@ -40,7 +45,10 @@ func main() {
 		pathEnv := os.Getenv("PATH")
 		paths := filepath.SplitList(pathEnv)
 
-		switch cmd := words[0]; cmd {
+		cmd := words[0]
+		args := words[1:]
+
+		switch cmd {
 		case "exit":
 			return
 
@@ -50,9 +58,8 @@ func main() {
 		case "type":
 			handleType(words, builtIn, paths)
 
-		// Printing error message
 		default:
-			fmt.Printf("%s: not found", cmd)
+			handleProgram(cmd, args)
 		}
 	}
 }
@@ -62,10 +69,27 @@ func handleEcho(words []string) {
 	fmt.Println(strings.Join(words[1:], " "))
 }
 
+// Running a program
+func handleProgram(cmd string, args []string) {
+	program := exec.Command(cmd, args...)
+
+	// Writes the child process directly to the terminal
+	program.Stdin = os.Stdin
+	program.Stdout = os.Stdout
+	program.Stderr = os.Stderr
+
+	// Automatically checks if the program is in $PATH
+	err := program.Run()
+	if err != nil {
+		fmt.Printf("%s: not found\n", cmd)
+	}
+}
+
 // Type checking of commands
 func handleType(words []string, builtIn map[string]bool, paths []string) {
 	if len(words) < 2 {
 		fmt.Println("type: missing argument")
+		return
 	}
 
 	if _, exists := builtIn[words[1]]; exists {
