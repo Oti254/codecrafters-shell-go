@@ -17,6 +17,7 @@ func main() {
 		"echo": true,
 		"exit": true,
 		"type": true,
+		"pwd":  true,
 	}
 
 	// Infinite loop for the REPL
@@ -58,10 +59,22 @@ func main() {
 		case "type":
 			handleType(words, builtIn, paths)
 
+		case "pwd":
+			handlePWD()
+
 		default:
 			handleProgram(cmd, args)
 		}
 	}
+}
+
+// Getting the current working directory
+func handlePWD() {
+	path, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(path)
 }
 
 // Implementing echo my way
