@@ -73,11 +73,24 @@ func main() {
 }
 
 func handleCD(cmd string, args []string) {
-	targetDir := args[0]
+	// Handling more than one argument
+	if len(args) > 1 {
+		fmt.Fprintf(os.Stderr, "%s: too many arguments\n", cmd)
+	}
 
+	var targetDir string
+
+	// Handling no argument or ~
+	if len(args) == 0 || args[0] == "~" {
+		targetDir = os.Getenv("HOME")
+	} else {
+		targetDir = args[0]
+	}
+
+	// Changing to the target directory
 	err := os.Chdir(targetDir)
 	if err != nil {
-		fmt.Printf("cd: %s: No such file or directory\n", targetDir)
+		fmt.Fprintf(os.Stderr, "%s: %s: No such file or directory\n", cmd, targetDir)
 	}
 }
 
