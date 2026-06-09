@@ -18,6 +18,7 @@ func main() {
 		"exit": true,
 		"type": true,
 		"pwd":  true,
+		"cd":   true,
 	}
 
 	// Infinite loop for the REPL
@@ -62,9 +63,21 @@ func main() {
 		case "pwd":
 			handlePWD()
 
+		case "cd":
+			handleCD(cmd, args)
+
 		default:
 			handleProgram(cmd, args)
 		}
+	}
+}
+
+func handleCD(cmd string, args []string) {
+	targetDir := args[0]
+
+	err := os.Chdir(targetDir)
+	if err != nil {
+		fmt.Printf("cd: %s : No such file or directory\n", targetDir)
 	}
 }
 
