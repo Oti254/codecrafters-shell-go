@@ -216,18 +216,24 @@ func parseCommand(command string) []string {
 		words          []string
 		current        strings.Builder
 		inSingleQuotes bool
+		inDoubleQuotes bool
 	)
 
 	for _, char := range command {
 		switch {
+
+		// Handling double quotes
+		case char == '"':
+			inDoubleQuotes = !inDoubleQuotes
+
 		// Switching the state
-		case char == '\'':
+		case char == '\'' && !inDoubleQuotes:
 			inSingleQuotes = !inSingleQuotes
 
 		// Handling the spaces outside the quotes
 		// When we encounter a space save the word
 		// The space is treated as a separator not a character
-		case char == ' ' && !inSingleQuotes:
+		case char == ' ' && !inSingleQuotes && !inDoubleQuotes:
 			if current.Len() > 0 {
 				words = append(words, current.String())
 				current.Reset()
