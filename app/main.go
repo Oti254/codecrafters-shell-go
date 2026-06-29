@@ -36,8 +36,44 @@ func main() {
 		// Removes the newline at the end
 		command = strings.TrimSpace(command)
 
+		/**
+		// Check if an element is a single quote
+		indexes := []int{}
+		for i, char := range command {
+			if char == '\'' {
+				fmt.Printf("Found you at %v\n", i)
+				indexes = append(indexes, i)
+			}
+		}
+		fmt.Printf("%v\n", indexes)
+
+		// Get the length of the slices of indexes
+		idxLen := len(indexes)
+		// Printing everything between the first and last single quote
+		// Works for when we have two single quotes
+		if idxLen%2 == 0 {
+			fmt.Println("Here is the index length", idxLen)
+			if idxLen == 2 {
+				minIdx := slices.Min(indexes)
+				maxIdx := slices.Max(indexes)
+				fmt.Println(command[minIdx+1 : maxIdx])
+			}
+			if idxLen > 2 {
+				i := 0
+				for _ = range idxLen - 2 {
+					minIdx := indexes[i]
+					maxIdx := indexes[i+1]
+					fmt.Printf(command[minIdx+1 : maxIdx])
+					i += 2
+				}
+				fmt.Println()
+			}
+		}
+		**/
+
 		// Eliminates the spaces and places individual words in a list
-		words := strings.Fields(command)
+		// Factoring in words that are inside quotes
+		words := parseCommand(command)
 
 		if len(words) == 0 {
 			continue
@@ -78,12 +114,17 @@ func handleCD(cmd string, args []string) {
 		fmt.Fprintf(os.Stderr, "%s: too many arguments\n", cmd)
 	}
 
+	home := os.Getenv("HOME")
 	var targetDir string
 
-	// Handling no argument or ~
-	if len(args) == 0 || args[0] == "~" {
-		targetDir = os.Getenv("HOME")
-	} else {
+	switch {
+	case len(args) == 0:
+		targetDir = home
+	case args[0] == "~":
+		targetDir = home
+	case strings.HasPrefix(args[0], "~/"):
+		targetDir = filepath.Join(home, strings.TrimPrefix(args[0], "~/"))
+	default:
 		targetDir = args[0]
 	}
 
@@ -167,4 +208,38 @@ func handleType(words []string, builtIn map[string]bool, paths []string) {
 	if !found {
 		fmt.Println(words[1] + ": not found")
 	}
+}
+
+// Handling single quotes
+func parseCommand(command string) []string {
+	var (
+		words          []string
+		current        strings.Builder
+		inSingleQuotes bool
+	)
+
+	for _, char := range command {
+		switch {
+		// Switching the state
+		case char == '\'':
+			inSingleQuotes = !inSingleQuotes
+
+		// Handling the spaces outside the quotes
+		// When we encounter a space save the word
+		// The space is treated as a separator not a character
+		case char == ' ' && !inSingleQuotes:
+			if current.Len() > 0 {
+				words = append(words, current.String())
+				current.Reset()
+			}
+		// Writing the characters by default to the current container housing characters
+		// Before moving them to the string
+		default:
+			current.WriteRune(char)
+		}
+	}
+	if current.Len() > 0 {
+		words = append(words, current.String())
+	}
+	return words
 }
