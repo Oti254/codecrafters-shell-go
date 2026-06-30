@@ -222,9 +222,8 @@ func parseCommand(command string) []string {
 	for i := 0; i < len(command); i++ {
 		char := command[i]
 		switch {
-
 		// Handling double quotes
-		case char == '"':
+		case char == '"' && !inSingleQuotes:
 			inDoubleQuotes = !inDoubleQuotes
 
 		// Switching the state
