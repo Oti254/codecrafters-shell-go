@@ -235,6 +235,12 @@ func parseCommand(command string) []string {
 			current.WriteByte(command[i+1])
 			i++
 
+		// Handling backslash inside of double quotes
+		// This should enable escaping of characters
+		case char == '\\' && inDoubleQuotes:
+			current.WriteByte(command[i+1])
+			i++
+
 		// Handling the spaces outside the quotes
 		// When we encounter a space save the word
 		// The space is treated as a separator not a character
