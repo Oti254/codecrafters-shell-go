@@ -219,7 +219,8 @@ func parseCommand(command string) []string {
 		inDoubleQuotes bool
 	)
 
-	for _, char := range command {
+	for i := 0; i < len(command); i++ {
+		char := command[i]
 		switch {
 
 		// Handling double quotes
@@ -230,6 +231,11 @@ func parseCommand(command string) []string {
 		case char == '\'' && !inDoubleQuotes:
 			inSingleQuotes = !inSingleQuotes
 
+		// Handling backslash outside of quotes
+		case char == '\\' && !inDoubleQuotes && !inSingleQuotes:
+			current.WriteByte(command[i+1])
+			i++
+
 		// Handling the spaces outside the quotes
 		// When we encounter a space save the word
 		// The space is treated as a separator not a character
@@ -238,10 +244,11 @@ func parseCommand(command string) []string {
 				words = append(words, current.String())
 				current.Reset()
 			}
+
 		// Writing the characters by default to the current container housing characters
 		// Before moving them to the string
 		default:
-			current.WriteRune(char)
+			current.WriteByte(char)
 		}
 	}
 	if current.Len() > 0 {
