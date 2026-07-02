@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -16,6 +17,6 @@ func handleProgram(w io.Writer, cmd string, args []string) {
 	// Executing the child process
 	err := program.Run()
 	if err != nil {
-		return
+		fmt.Printf("%s: not found\n", cmd)
 	}
 }
