@@ -63,7 +63,6 @@ func main() {
 			file, err := os.OpenFile(info.Filename, os.O_RDWR|os.O_CREATE, 0666)
 			if err != nil {
 				fmt.Println(err)
-				return
 			}
 			defer file.Close()
 

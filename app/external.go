@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,6 +18,16 @@ func handleProgram(w io.Writer, cmd string, args []string) {
 	// Executing the child process
 	err := program.Run()
 	if err != nil {
-		fmt.Printf("%s: not found\n", cmd)
+		// Checking the type error
+		var exitError *exec.ExitError
+		var execError *exec.Error
+		if errors.As(err, &execError) {
+			fmt.Fprintf(os.Stderr, "%s: not found\n", cmd)
+		} else if errors.As(err, &exitError) {
+			return
+		} else {
+			fmt.Fprintf(os.Stderr, "%s: unexpected error: %v\n", cmd, err)
+		}
+
 	}
 }
