@@ -32,35 +32,12 @@ var builtinRegistry = map[string]BuiltinHandler{
 	"type": handleType,
 }
 
-/**
-func getBuiltinRegistry() map[string]BuiltinHandler {
-	return map[string]BuiltinHandler{
-		"cd":   handleCD,
-		"echo": handleEcho,
-		"type": handleType,
-		"pwd":  handlePWD,
-		"exit": handleExit,
-	}
-}
-**/
-
 func inRegistry(cmd string) bool {
 	if _, exists := builtinChecker[cmd]; exists {
 		return exists
 	}
 	return false
 }
-
-/**
-// List of all builtin types
-var builtIn = map[string]bool{
-	"echo": true,
-	"exit": true,
-	"type": true,
-	"pwd":  true,
-	"cd":   true,
-}
-**/
 
 // Getting the contents of the PATH variable
 var pathEnv = os.Getenv("PATH")

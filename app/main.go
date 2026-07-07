@@ -65,28 +65,5 @@ func main() {
 		} else {
 			handleProgram(w, cmd, info.WorkingArgs)
 		}
-
-		/**
-
-		switch cmd {
-		case "exit":
-			return
-
-		case "echo":
-			handleEcho(w, info.WorkingArgs)
-
-		case "type":
-			handleType(w, words)
-
-		case "pwd":
-			handlePWD(w, words)
-
-		case "cd":
-			handleCD(w, cmd, args)
-
-		default:
-			handleProgram(w, cmd, info.WorkingArgs)
-		}
-		**/
 	}
 }
