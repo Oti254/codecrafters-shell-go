@@ -5,21 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-
-	// List of all builtin types
-	builtIn := map[string]bool{
-		"echo": true,
-		"exit": true,
-		"type": true,
-		"pwd":  true,
-		"cd":   true,
-	}
 
 	// Infinite loop for the REPL
 	for {
@@ -45,10 +35,6 @@ func main() {
 			continue
 		}
 
-		// Getting the contents of the PATH variable
-		pathEnv := os.Getenv("PATH")
-		paths := filepath.SplitList(pathEnv)
-
 		cmd := words[0]
 		args := words[1:]
 
@@ -56,7 +42,7 @@ func main() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		var writer io.Writer
+		var w io.Writer
 		// Configuring where the child process is written to
 		if info.RedirectFound {
 			// Configuring the child process
@@ -67,30 +53,40 @@ func main() {
 			defer file.Close()
 
 			// Writes the child process directly to the file redirected
-			writer = file
+			w = file
 		} else {
 			// Writes the child process directly to the terminal
-			writer = os.Stdout
+			w = os.Stdout
 		}
+
+		handler, ok := builtinRegistry[cmd]
+		if ok {
+			handler(w, words)
+		} else {
+			handleProgram(w, cmd, info.WorkingArgs)
+		}
+
+		/**
 
 		switch cmd {
 		case "exit":
 			return
 
 		case "echo":
-			handleEcho(writer, info.WorkingArgs)
+			handleEcho(w, info.WorkingArgs)
 
 		case "type":
-			handleType(writer, words, builtIn, paths)
+			handleType(w, words)
 
 		case "pwd":
-			handlePWD(writer)
+			handlePWD(w, words)
 
 		case "cd":
-			handleCD(writer, cmd, args)
+			handleCD(w, cmd, args)
 
 		default:
-			handleProgram(writer, cmd, info.WorkingArgs)
+			handleProgram(w, cmd, info.WorkingArgs)
 		}
+		**/
 	}
 }

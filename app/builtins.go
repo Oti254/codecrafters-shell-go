@@ -8,6 +8,50 @@ import (
 	"strings"
 )
 
+// Separating the checking of the existence of a command
+// with the handler responsible for executing the command
+// Implementing a set of builtin command names
+var builtinChecker = map[string]struct{}{
+	"cd":   {},
+	"echo": {},
+	"exit": {},
+	"pwd":  {},
+	"type": {},
+}
+
+type BuiltinHandler func(io.Writer, []string)
+
+// Checking what is responsible for handling commands
+// Instead of does a command exist
+
+var builtinRegistry = map[string]BuiltinHandler{
+	"cd":   handleCD,
+	"echo": handleEcho,
+	"exit": handleExit,
+	"pwd":  handlePWD,
+	"type": handleType,
+}
+
+/**
+func getBuiltinRegistry() map[string]BuiltinHandler {
+	return map[string]BuiltinHandler{
+		"cd":   handleCD,
+		"echo": handleEcho,
+		"type": handleType,
+		"pwd":  handlePWD,
+		"exit": handleExit,
+	}
+}
+**/
+
+func inRegistry(cmd string) bool {
+	if _, exists := builtinChecker[cmd]; exists {
+		return exists
+	}
+	return false
+}
+
+/**
 // List of all builtin types
 var builtIn = map[string]bool{
 	"echo": true,
@@ -16,25 +60,34 @@ var builtIn = map[string]bool{
 	"pwd":  true,
 	"cd":   true,
 }
+**/
+
+// Getting the contents of the PATH variable
+var pathEnv = os.Getenv("PATH")
+var paths = filepath.SplitList(pathEnv)
 
 // Getting the current working directory
-func handlePWD(w io.Writer) {
+func handlePWD(w io.Writer, words []string) {
 	path, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	fmt.Fprintln(w, path)
 }
 
 // Implementing echo my way
 func handleEcho(w io.Writer, words []string) {
-	fmt.Fprintln(w, strings.Join(words[:], " "))
+	fmt.Fprintln(w, strings.Join(words[1:], " "))
 }
 
-func handleCD(w io.Writer, cmd string, args []string) {
+func handleCD(w io.Writer, words []string) {
+	cmd := words[0]
+	args := words[1:]
 	// Handling more than one argument
 	if len(args) > 1 {
 		fmt.Fprintf(w, "%s: too many arguments\n", cmd)
+		return
 	}
 
 	home := os.Getenv("HOME")
@@ -54,19 +107,28 @@ func handleCD(w io.Writer, cmd string, args []string) {
 	// Changing to the target directory
 	err := os.Chdir(targetDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s: %s: No such file or directory\n", cmd, targetDir)
+		fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", targetDir)
 	}
 }
 
+func handleExit(w io.Writer, words []string) {
+	os.Exit(0)
+}
+
 // Type checking of commands
-func handleType(w io.Writer, words []string, builtIn map[string]bool, paths []string) {
+func handleType(w io.Writer, words []string) {
+	// Getting the contents of the PATH variable
+	pathEnv = os.Getenv("PATH")
+	paths = filepath.SplitList(pathEnv)
 	if len(words) < 2 {
 		fmt.Fprintln(w, "type: missing argument")
 		return
 	}
 
-	if _, exists := builtIn[words[1]]; exists {
-		fmt.Fprintln(w, words[1]+" is a shell builtin")
+	cmd := words[1]
+
+	if inRegistry(cmd) {
+		fmt.Fprintln(w, cmd+" is a shell builtin")
 		return
 	}
 
@@ -75,8 +137,8 @@ func handleType(w io.Writer, words []string, builtIn map[string]bool, paths []st
 	isExec := false
 
 	for _, dir := range paths {
-		path := filepath.Join(dir, words[1])
-		fi, err := os.Stat(path)
+		fullPath := filepath.Join(dir, words[1])
+		fi, err := os.Stat(fullPath)
 		if err != nil {
 			continue
 		}
@@ -94,11 +156,12 @@ func handleType(w io.Writer, words []string, builtIn map[string]bool, paths []st
 
 		// Prints the path if the file found is executable
 		if found && isExec {
-			fmt.Fprintf(w, "%s is %s\n", words[1], path)
-			break
+			fmt.Fprintf(w, "%s is %s\n", cmd, fullPath)
+			return
+
 		}
 	}
 	if !found {
-		fmt.Fprintln(w, words[1]+": not found")
+		fmt.Fprintln(w, cmd+": not found")
 	}
 }
