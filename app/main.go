@@ -69,22 +69,6 @@ func main() {
 
 			}
 		}
-		/**
-		if info.RedirectFound {
-			// Configuring the child process
-			file, err := os.OpenFile(info.Filename, os.O_RDWR|os.O_CREATE, 0666)
-			if err != nil {
-				fmt.Println(err)
-			}
-			defer file.Close()
-
-			// Writes the child process directly to the file redirected
-			w = file
-		} else {
-			// Writes the child process directly to the terminal
-			w = os.Stdout
-		}
-		**/
 		input := append([]string{cmd}, args...)
 
 		handler, ok := builtinRegistry[cmd]

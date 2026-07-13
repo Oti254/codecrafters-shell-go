@@ -5,39 +5,6 @@ import (
 	"strings"
 )
 
-/*
-*
-
-	type Redirection struct {
-		Filename      string
-		RedirectFound bool
-		WorkingArgs   []string
-	}
-
-// Handling redirections
-
-	func analyzeRedirection(args []string) (Redirection, error) {
-		r := Redirection{"", false, args}
-		// Analyze the command line arguments
-		// TODO:
-		// Support multiple redirections (e.g. "echo hello > a > b").
-		// The parser currently stops after the first output redirection because
-		// the current shell implementation supports only a single stdout redirect.
-		for i, arg := range args {
-			if arg == ">" || arg == "1>" {
-				r.RedirectFound = true
-				r.WorkingArgs = args[:i]
-				if len(args) <= (i + 1) {
-					return r, fmt.Errorf("shell: parse error near '\\n'\n")
-				}
-				r.Filename = args[i+1]
-			}
-		}
-		return r, nil
-	}
-
-*
-*/
 type Redirection struct {
 	FD       int
 	Operator string
