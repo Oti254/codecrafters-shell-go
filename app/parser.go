@@ -5,35 +5,91 @@ import (
 	"strings"
 )
 
-type Redirection struct {
-	Filename      string
-	RedirectFound bool
-	WorkingArgs   []string
-}
+/*
+*
+
+	type Redirection struct {
+		Filename      string
+		RedirectFound bool
+		WorkingArgs   []string
+	}
 
 // Handling redirections
-func analyzeRedirection(args []string) (Redirection, error) {
-	r := Redirection{"", false, args}
-	// Analyze the command line arguments
-	// TODO:
-	// Support multiple redirections (e.g. "echo hello > a > b").
-	// The parser currently stops after the first output redirection because
-	// the current shell implementation supports only a single stdout redirect.
-	for i, arg := range args {
-		if arg == ">" || arg == "1>" {
-			r.RedirectFound = true
-			r.WorkingArgs = args[:i]
-			if len(args) <= (i + 1) {
-				return r, fmt.Errorf("shell: parse error near '\\n'\n")
+
+	func analyzeRedirection(args []string) (Redirection, error) {
+		r := Redirection{"", false, args}
+		// Analyze the command line arguments
+		// TODO:
+		// Support multiple redirections (e.g. "echo hello > a > b").
+		// The parser currently stops after the first output redirection because
+		// the current shell implementation supports only a single stdout redirect.
+		for i, arg := range args {
+			if arg == ">" || arg == "1>" {
+				r.RedirectFound = true
+				r.WorkingArgs = args[:i]
+				if len(args) <= (i + 1) {
+					return r, fmt.Errorf("shell: parse error near '\\n'\n")
+				}
+				r.Filename = args[i+1]
 			}
-			r.Filename = args[i+1]
 		}
+		return r, nil
 	}
-	return r, nil
+
+*
+*/
+type Redirection struct {
+	FD       int
+	Operator string
+	Filename string
+}
+type Command struct {
+	Name         string
+	Args         []string
+	Redirections []Redirection
 }
 
-// Handling single quotes
-func parseCommand(command string) []string {
+func parseCommand(input string) (Command, error) {
+	words := tokenizer(input)
+	cmd := Command{}
+
+	// Checks if there are any words to parse
+	if len(words) == 0 {
+		return cmd, nil
+	}
+
+	for i := 0; i < len(words); i++ {
+		switch {
+		case i == 0:
+			cmd.Name = words[i]
+		case isRedirection(words[i]):
+			switch {
+			case len(words) <= (i + 1):
+				return cmd, fmt.Errorf("shell: parse error near '\\n'\n")
+
+			case words[i] == ">" || words[i] == "1>":
+				cmd.Redirections = append(cmd.Redirections, Redirection{
+					FD:       1,
+					Operator: ">",
+					Filename: words[i+1],
+				})
+			case words[i] == "2>":
+				cmd.Redirections = append(cmd.Redirections, Redirection{
+					FD:       2,
+					Operator: ">",
+					Filename: words[i+1],
+				})
+			}
+			i += 1
+
+		default:
+			cmd.Args = append(cmd.Args, words[i])
+		}
+	}
+	return cmd, nil
+}
+
+func tokenizer(input string) []string {
 	var (
 		words          []string
 		current        strings.Builder
@@ -41,8 +97,8 @@ func parseCommand(command string) []string {
 		inDoubleQuotes bool
 	)
 
-	for i := 0; i < len(command); i++ {
-		char := command[i]
+	for i := 0; i < len(input); i++ {
+		char := input[i]
 		switch {
 		// Handling double quotes
 		case char == '"' && !inSingleQuotes:
@@ -54,13 +110,13 @@ func parseCommand(command string) []string {
 
 		// Handling backslash outside of quotes
 		case char == '\\' && !inDoubleQuotes && !inSingleQuotes:
-			current.WriteByte(command[i+1])
+			current.WriteByte(input[i+1])
 			i++
 
 		// Handling backslash inside of double quotes
 		// This should enable escaping of characters
 		case char == '\\' && inDoubleQuotes:
-			current.WriteByte(command[i+1])
+			current.WriteByte(input[i+1])
 			i++
 
 		// Handling the spaces outside the quotes
@@ -82,4 +138,18 @@ func parseCommand(command string) []string {
 		words = append(words, current.String())
 	}
 	return words
+}
+
+var redirectChecker = map[string]struct{}{
+	">":   {},
+	"1>":  {},
+	">>":  {},
+	"1>>": {},
+	"2>>": {},
+	"2>":  {},
+}
+
+func isRedirection(token string) bool {
+	_, exists := redirectChecker[token]
+	return exists
 }

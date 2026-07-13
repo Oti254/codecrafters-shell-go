@@ -9,11 +9,11 @@ import (
 )
 
 // Running a program
-func handleProgram(w io.Writer, cmd string, args []string) {
+func handleProgram(stdout io.Writer, stderr io.Writer, cmd string, args []string) {
 	program := exec.Command(cmd, args...)
-	program.Stdout = w
+	program.Stdout = stdout
 	program.Stdin = os.Stdin
-	program.Stderr = os.Stderr
+	program.Stderr = stderr
 
 	// Executing the child process
 	err := program.Run()

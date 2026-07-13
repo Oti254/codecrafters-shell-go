@@ -29,21 +29,47 @@ func main() {
 		// Eliminates the spaces and places individual words in a list
 		// Factoring in words that are inside quotes
 		// This parses the commands from the command line
-		words := parseCommand(command)
-
-		if len(words) == 0 {
-			continue
-		}
-
-		cmd := words[0]
-		args := words[1:]
-
-		info, err := analyzeRedirection(args)
+		words, err := parseCommand(command)
 		if err != nil {
 			fmt.Println(err)
 		}
-		var w io.Writer
+
+		if words.Name == "" {
+			continue
+		}
+
+		cmd := words.Name
+		args := words.Args
+
+		var stdout io.Writer = os.Stdout
+		var stderr io.Writer = os.Stderr
 		// Configuring where the child process is written to
+		for _, redir := range words.Redirections {
+			switch {
+			case redir.FD == 1:
+				// Configuring the child process
+				file, err := os.OpenFile(redir.Filename, os.O_RDWR|os.O_CREATE, 0666)
+				if err != nil {
+					fmt.Println(err)
+				}
+				defer file.Close()
+
+				// Writes the child process directly to the file redirected
+				stdout = file
+			case redir.FD == 2:
+				// Configuring the child process
+				file, err := os.OpenFile(redir.Filename, os.O_RDWR|os.O_CREATE, 0666)
+				if err != nil {
+					fmt.Println(err)
+				}
+				defer file.Close()
+
+				// Writes the child process directly to the file redirected
+				stderr = file
+
+			}
+		}
+		/**
 		if info.RedirectFound {
 			// Configuring the child process
 			file, err := os.OpenFile(info.Filename, os.O_RDWR|os.O_CREATE, 0666)
@@ -58,12 +84,14 @@ func main() {
 			// Writes the child process directly to the terminal
 			w = os.Stdout
 		}
+		**/
+		input := append([]string{cmd}, args...)
 
 		handler, ok := builtinRegistry[cmd]
 		if ok {
-			handler(w, words)
+			handler(stdout, input)
 		} else {
-			handleProgram(w, cmd, info.WorkingArgs)
+			handleProgram(stdout, stderr, cmd, args)
 		}
 	}
 }
