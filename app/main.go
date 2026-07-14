@@ -2,9 +2,10 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"io"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -31,51 +32,27 @@ func main() {
 		// This parses the commands from the command line
 		words, err := parseCommand(command)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "Parse error", err)
 		}
 
 		if words.Name == "" {
 			continue
 		}
+		// Execute the command and handle any errors
+		if err := executeCmd(words); err != nil {
+			// Main decides how to display errors
+			var exitError *exec.ExitError
+			var execError *exec.Error
 
-		cmd := words.Name
-		args := words.Args
-
-		var stdout io.Writer = os.Stdout
-		var stderr io.Writer = os.Stderr
-		// Configuring where the child process is written to
-		for _, redir := range words.Redirections {
-			switch {
-			case redir.FD == 1:
-				// Configuring the child process
-				file, err := os.OpenFile(redir.Filename, os.O_RDWR|os.O_CREATE, 0666)
-				if err != nil {
-					fmt.Println(err)
-				}
-				defer file.Close()
-
-				// Writes the child process directly to the file redirected
-				stdout = file
-			case redir.FD == 2:
-				// Configuring the child process
-				file, err := os.OpenFile(redir.Filename, os.O_RDWR|os.O_CREATE, 0666)
-				if err != nil {
-					fmt.Println(err)
-				}
-				defer file.Close()
-
-				// Writes the child process directly to the file redirected
-				stderr = file
-
+			if errors.As(err, &execError) {
+				fmt.Fprintf(os.Stderr, "%s: command not found\n", words.Name)
+			} else if errors.As(err, &exitError) {
+				// Program ran but exited with non-zero status
+				// Don't print anything - the program's stderr output was already captured
+				continue
+			} else {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			}
-		}
-		input := append([]string{cmd}, args...)
-
-		handler, ok := builtinRegistry[cmd]
-		if ok {
-			handler(stdout, input)
-		} else {
-			handleProgram(stdout, stderr, cmd, args)
 		}
 	}
 }

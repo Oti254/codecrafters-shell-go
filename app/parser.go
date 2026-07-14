@@ -46,6 +46,18 @@ func parseCommand(input string) (Command, error) {
 					Operator: ">",
 					Filename: words[i+1],
 				})
+			case words[i] == ">>" || words[i] == "1>>":
+				cmd.Redirections = append(cmd.Redirections, Redirection{
+					FD:       1,
+					Operator: ">>",
+					Filename: words[i+1],
+				})
+			case words[i] == "2>>":
+				cmd.Redirections = append(cmd.Redirections, Redirection{
+					FD:       2,
+					Operator: ">>",
+					Filename: words[i+1],
+				})
 			}
 			i += 1
 

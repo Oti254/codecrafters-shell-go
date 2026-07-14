@@ -33,10 +33,8 @@ var builtinRegistry = map[string]BuiltinHandler{
 }
 
 func inRegistry(cmd string) bool {
-	if _, exists := builtinChecker[cmd]; exists {
-		return exists
-	}
-	return false
+	_, exists := builtinChecker[cmd]
+	return exists
 }
 
 // Getting the contents of the PATH variable
@@ -114,7 +112,7 @@ func handleType(w io.Writer, words []string) {
 	isExec := false
 
 	for _, dir := range paths {
-		fullPath := filepath.Join(dir, words[1])
+		fullPath := filepath.Join(dir, cmd)
 		fi, err := os.Stat(fullPath)
 		if err != nil {
 			continue
