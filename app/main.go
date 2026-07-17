@@ -1,38 +1,67 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"os/exec"
-	"strings"
+
+	"github.com/chzyer/readline"
+	"github.com/codecrafters-io/shell-starter-go/app/internal/terminal"
+)
+
+// Configuring tab completer choices
+var completer = readline.NewPrefixCompleter(
+	readline.PcItem("echo"),
+	readline.PcItem("exit"),
 )
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
+	// Replaces the bufio.NewScanner
+	// Initializing the readline instance
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:          "$ ",
+		HistoryFile:     "/tmp/readline.tmp",
+		AutoComplete:    completer,
+		InterruptPrompt: "^C",
+		EOFPrompt:       "exit",
+	})
+
+	if err != nil {
+		log.Fatalf("Error initializing readline: %v", err)
+	}
+	defer l.Close()
 
 	// Infinite loop for the REPL
 	for {
-		// Prints the prompt
-		fmt.Print("$ ")
-
-		// Reads the user input, stores it in a string
-		command, err := reader.ReadString('\n')
+		/**
+		line, err := l.Readline()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error reading input", err)
-			os.Exit(1)
+			if err == readline.ErrInterrupt {
+				continue
+			} else if err == io.EOF {
+				break
+			}
 		}
 
 		// Removes the newline at the end
-		command = strings.TrimSpace(command)
-
-		// Eliminates the spaces and places individual words in a list
-		// Factoring in words that are inside quotes
-		// This parses the commands from the command line
-		words, err := parseCommand(command)
+		line = strings.TrimSpace(line)
+		**/
+		line, err := terminal.ReadCommand(l)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Parse error", err)
+			if err == readline.ErrInterrupt {
+				continue
+			} else if err == io.EOF {
+				break
+			}
+		}
+
+		// This parses the commands from the command line
+		words, err := parseCommand(line)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Parse error: %v\n", err)
 		}
 
 		if words.Name == "" {
