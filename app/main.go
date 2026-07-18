@@ -3,57 +3,29 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
 
-	"github.com/chzyer/readline"
 	"github.com/codecrafters-io/shell-starter-go/app/internal/terminal"
-)
-
-// Configuring tab completer choices
-var completer = readline.NewPrefixCompleter(
-	readline.PcItem("echo"),
-	readline.PcItem("exit"),
 )
 
 func main() {
 	// Replaces the bufio.NewScanner
 	// Initializing the readline instance
-	l, err := readline.NewEx(&readline.Config{
-		Prompt:          "$ ",
-		HistoryFile:     "/tmp/readline.tmp",
-		AutoComplete:    completer,
-		InterruptPrompt: "^C",
-		EOFPrompt:       "exit",
-	})
-
+	term, err := terminal.New()
 	if err != nil {
 		log.Fatalf("Error initializing readline: %v", err)
 	}
-	defer l.Close()
+	defer term.Close()
 
 	// Infinite loop for the REPL
 	for {
-		/**
-		line, err := l.Readline()
+		line, err := term.ReadCommand()
 		if err != nil {
-			if err == readline.ErrInterrupt {
+			if err == terminal.ErrInterrupt {
 				continue
-			} else if err == io.EOF {
-				break
-			}
-		}
-
-		// Removes the newline at the end
-		line = strings.TrimSpace(line)
-		**/
-		line, err := terminal.ReadCommand(l)
-		if err != nil {
-			if err == readline.ErrInterrupt {
-				continue
-			} else if err == io.EOF {
+			} else if err == terminal.ErrEOF {
 				break
 			}
 		}
